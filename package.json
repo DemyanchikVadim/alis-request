@@ -1,0 +1,19 @@
+{
+  "name": "alis-request",
+  "version": "1.0.0",
+  "description": "Get books by year in alis library",
+  "main": "index.js",
+  "repository": "https://github.com/DemyanchikVadim/alis-request.git",
+  "author": "Vadim Demyanchik <vadim.demyanchik@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "alis": "nodemon --exec babel-node -- ./index.js"
+  },
+  "dependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-preset-es2015": "^6.24.0",
+    "cheerio": "^0.22.0",
+    "nodemon": "^1.11.0",
+    "request": "^2.81.0"
+  }
+}
