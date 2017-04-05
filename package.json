@@ -1,6 +1,6 @@
 {
   "name": "alis-request",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Get books by year in alis library",
   "main": "index.js",
   "repository": "https://github.com/DemyanchikVadim/alis-request.git",
