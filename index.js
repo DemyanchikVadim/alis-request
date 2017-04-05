@@ -1,44 +1,46 @@
 const cheerio = require('cheerio');
 const request = require('request').defaults({ jar: true });
 
-function getAllBooks(urls) {
-  const promise = new Promise((resolve, reject) => {
-    const books = [];
-    function getNextUrl(q) {
-      if (q[0] === 'undefined') {
-        resolve(books);
+function getPageUrl(body) {
+  const $ = cheerio.load(body);
+  const pageLink = $('a[id^=\'Agt\']');
+  const pageUrl = `${$(pageLink).attr('href')}`;
+  return pageUrl;
+}
+
+function run(urlsQueue, callback) {
+  const books = [];
+  function fn(q) {
+    if (q[0] === 'undefined') {
+      callback(null, books);
+      return;
+    }
+    request(q[0], (err, res, body) => {
+      if (err) {
+        callback(err);
+      }
+      const $ = cheerio.load(body);
+      const nextPageUrl = getPageUrl(body);
+      const remainingQueue = q.slice(1);
+      console.log(books.length);
+
+      $('.article').each(() => {
+        books.push($(this).text());
+      });
+
+
+      if (nextPageUrl === 'undefined') {
+        callback(null, books);
         return;
       }
-      console.log(q);
-      request(q[0], (err, res, body) => {
-        if (!err) {
-          const $ = cheerio.load(body);
-          const nextPageLink = $('a[id^=\'Agt\']');
-          const nextPageUrl = `${$(nextPageLink).attr('href')}`;
-          const remainingQueue = q.slice(1);
 
-          $('.article').each(() => {
-            books.push($(this).text());
-          });
-
-          console.log(books.length);
-
-          if (nextPageUrl === 'undefined') {
-            console.log('end of QUEUE');
-            resolve(books);
-            return;
-          }
-
-          if (q.length === 1) {
-            remainingQueue.push(`http://86.57.174.45/alis/EK/${nextPageUrl}`);
-          }
-          getNextUrl(remainingQueue);
-        }
-      });
-    }
-    getNextUrl(urls);
-  });
-  return promise;
+      if (q.length === 1) {
+        remainingQueue.push(`http://86.57.174.45/alis/EK/${nextPageUrl}`);
+      }
+      fn(remainingQueue);
+    });
+  }
+  fn(urlsQueue);
 }
 
 function getFirstTenPageUrls(html) {
@@ -59,17 +61,25 @@ function sendInitialQuery(query, callback) {
   });
 }
 
-function getAllBooksByYear(query) {
-  const promise = new Promise((resolve, reject) => {
-    sendInitialQuery(query, (err, html) => {
-      const firstTenPageUrls = getFirstTenPageUrls(html);
-      getAllBooks(firstTenPageUrls).then((allBooks) => {
-        console.log(`Scrape alis over ${allBooks.length}`);
-      });
+function getAllBooksByYear(query, callback) {
+  sendInitialQuery(query, (err, html) => {
+    if (err) {
+      callback(err);
+    }
+    const firstTenPageUrls = getFirstTenPageUrls(html);
+    run(firstTenPageUrls, (error, books) => {
+      if (error) {
+        callback(error);
+      }
+      callback(null, books);
     });
   });
-  return promise;
 }
 
-export default getAllBooksByYear;
-
+module.exports = {
+  getAllBooksByYear,
+  sendInitialQuery,
+  getPageUrl,
+  getFirstTenPageUrls,
+  run,
+};
