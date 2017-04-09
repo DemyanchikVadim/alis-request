@@ -5,3 +5,4 @@ test
 .gitignore
 node_modules
 .idea
+.eslintrc

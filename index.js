@@ -23,8 +23,7 @@ export function sendInitialQuery(query, callback) {
 export function getPage(url, jug, callback) {
   request({ url, jar: jug }, (err, response, body) => {
     if (err) {
-      callback(err);
-      return;
+      return callback(err);
     }
     callback(null, body);
   });
@@ -37,7 +36,7 @@ export function getNextPageUrl($) {
 }
 
 export function getBooks($) {
-  $('.article').each(function () {
+  return $('.article').each(function () {
     ReadableStreamBooks.push($(this).text());
   });
 }
@@ -51,20 +50,17 @@ export function getNumberedPageUrls(page, ip) {
 
 export function run(fn, q, ip, jar) {
   if (q.length === 0) {
-    ReadableStreamBooks.push(null);
-    return;
+    return ReadableStreamBooks.push(null);
   }
   fn(q[0], jar, (err, page) => {
     if (err) {
-      console.log(err);
-      return;
+      return err;
     }
     const $ = cheerio.load(page);
     getBooks($);
     const nextPageUrl = getNextPageUrl($);
     if (nextPageUrl === 'undefined') {
-      ReadableStreamBooks.push(null);
-      return;
+      return ReadableStreamBooks.push(null);
     }
     const remainingQueue = q.slice(1);
     if (q.length === 1) {
