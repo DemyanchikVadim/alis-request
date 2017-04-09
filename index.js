@@ -1,85 +1,75 @@
-const cheerio = require('cheerio');
-const request = require('request').defaults({ jar: true });
+import cheerio from 'cheerio';
+import request from 'request';
+import Stream from 'stream';
 
-function getPageUrl(body) {
-  const $ = cheerio.load(body);
-  const pageLink = $('a[id^=\'Agt\']');
-  const pageUrl = `${$(pageLink).attr('href')}`;
+export const ReadableStreamBooks = new Stream.Readable();
+ReadableStreamBooks._read = () => {};
+
+export function sendInitialQuery(query, callback) {
+  if (!query.year) {
+    return process.nextTick(callback, new Error('query.year is not provided'));
+  }
+  const j = request.jar();
+  const INITIAL_URL = `http://${query.ip}/alis/EK/do_searh.php?radiodate=simple&valueINP=${query.year}&tema=1&tag=6`;
+  request({ url: INITIAL_URL, jar: j }, (err, response, body) => {
+    if (err) {
+      callback(err);
+      return;
+    }
+    callback(null, { page: body, jar: j });
+  });
+}
+
+export function getPage(url, jug, callback) {
+  request({ url, jar: jug }, (err, response, body) => {
+    if (err) {
+      callback(err);
+      return;
+    }
+    callback(null, body);
+  });
+}
+
+export function getNextPageUrl($) {
+  const pageLink = $('#Agt');
+  const pageUrl = (`${$(pageLink).attr('href')}`);
   return pageUrl;
 }
 
-function run(urlsQueue, callback) {
-  const books = [];
-  function fn(q) {
-    if (q[0] === 'undefined') {
-      callback(null, books);
-      return;
-    }
-    request(q[0], (err, res, body) => {
-      if (err) {
-        callback(err);
-      }
-      const $ = cheerio.load(body);
-      const nextPageUrl = getPageUrl(body);
-      const remainingQueue = q.slice(1);
-      console.log(books.length);
-
-      $('.article').each(() => {
-        books.push($(this).text());
-      });
-
-
-      if (nextPageUrl === 'undefined') {
-        callback(null, books);
-        return;
-      }
-
-      if (q.length === 1) {
-        remainingQueue.push(`http://86.57.174.45/alis/EK/${nextPageUrl}`);
-      }
-      fn(remainingQueue);
-    });
-  }
-  fn(urlsQueue);
+export function getBooks($) {
+  $('.article').each(function () {
+    ReadableStreamBooks.push($(this).text());
+  });
 }
 
-function getFirstTenPageUrls(html) {
-  const $ = cheerio.load(html);
+export function getNumberedPageUrls(page, ip) {
+  const $ = cheerio.load(page);
   const firstTenPageLinks = $('a[href^=\'do_other\']');
-  const firstTenPageUrls = $(firstTenPageLinks).map((i, link) => `http://86.57.174.45/alis/EK/${$(link).attr('href')}`).toArray();
+  const firstTenPageUrls = $(firstTenPageLinks).map((i, link) => `http://${ip}/alis/EK/${$(link).attr('href')}`).toArray();
   return firstTenPageUrls;
 }
 
-function sendInitialQuery(query, callback) {
-  const url = `http://86.57.174.45/alis/EK/do_searh.php?radiodate=simple&valueINP=${query.year}&tema=1&tag=6`;
-  request(url, (err, response, html) => {
+export function run(fn, q, ip, jar) {
+  if (q.length === 0) {
+    ReadableStreamBooks.push(null);
+    return;
+  }
+  fn(q[0], jar, (err, page) => {
     if (err) {
       console.log(err);
-      callback(err);
+      return;
     }
-    callback(null, html);
+    const $ = cheerio.load(page);
+    getBooks($);
+    const nextPageUrl = getNextPageUrl($);
+    if (nextPageUrl === 'undefined') {
+      ReadableStreamBooks.push(null);
+      return;
+    }
+    const remainingQueue = q.slice(1);
+    if (q.length === 1) {
+      remainingQueue.push(`http://${ip}/alis/EK/${nextPageUrl}`);
+    }
+    run(fn, remainingQueue, ip, jar);
   });
 }
-
-function getAllBooksByYear(query, callback) {
-  sendInitialQuery(query, (err, html) => {
-    if (err) {
-      callback(err);
-    }
-    const firstTenPageUrls = getFirstTenPageUrls(html);
-    run(firstTenPageUrls, (error, books) => {
-      if (error) {
-        callback(error);
-      }
-      callback(null, books);
-    });
-  });
-}
-
-module.exports = {
-  getAllBooksByYear,
-  sendInitialQuery,
-  getPageUrl,
-  getFirstTenPageUrls,
-  run,
-};

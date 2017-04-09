@@ -13,25 +13,48 @@ yarn
 yarn add alis-request
 ```
 
-### API
+## API
 
-* getAllBooksByYear - get all book by year
+* ReadableStreamBooks - read all book by year in stream
 * sendInitialQuery - make initial http query
-* getPageUrl - get page url
-* getFirstTenPageUrls - get ten page urls
+* getPage - get page body
+* getNumberedPageUrls - get ten page urls
 * run - recursive runner
 
 
-### Examples
+## Examples
 
 You can do what you want with books, for example save in database.
-Next example return all books 2016 year.
-```
-const AlisRequest = require('alis-request');
+Next example return all books 2015 year in stream.
+```js
+import Stream from 'stream';
+import { sendInitialQuery, getPage, getNumberedPageUrls, run, ReadableStreamBooks } from './index';
 
-AlisRequest.getAllBooksByYear({ year: 2016 }, (err, books) => {
-  console.log(books.length);
+const WritableStreamBooks = new Stream.Writable();
+ReadableStreamBooks.pipe(WritableStreamBooks);
+
+const books = [];
+
+const initParams = {
+  year: 2015,
+  ip: '86.57.174.45',
+};
+
+sendInitialQuery(initParams, (err, res) => {
+  if (err) {
+    console.log(err);
+    return;
+  }
+  const firstTenPageUrls = getNumberedPageUrls(res.page, initParams.ip);
+  run(getPage, firstTenPageUrls, initParams.ip, res.jar);
 });
+
+WritableStreamBooks._write = (book, encoding, done) => {
+  books.push(book);
+  console.log(`STREAM: ${books.length}`);
+  // ready to process the next chunk
+  done();
+};
 
 ```
 
