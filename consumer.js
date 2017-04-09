@@ -22,7 +22,7 @@ sendInitialQuery(initParams, (err, res) => {
 
 WritableStreamBooks._write = (book, encoding, done) => {
   books.push(book);
-  console.log(`STREAM: ${books.length}`);
+  console.log(`STREAM ${books.length}`);
   // ready to process the next chunk
   done();
 };
