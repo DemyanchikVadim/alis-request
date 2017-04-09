@@ -1,15 +1,16 @@
 {
   "name": "alis-request",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Get books by year in alis library",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "repository": "https://github.com/DemyanchikVadim/alis-request.git",
   "author": "Vadim Demyanchik <vadim.demyanchik@gmail.com>",
   "license": "MIT",
   "scripts": {
     "start": "nodemon --exec babel-node -- ./consumer.js",
     "test": "mocha --compilers js:babel-core/register",
-    "lint": "eslint index.js"
+    "lint": "eslint index.js",
+    "prepublish": "babel index.js --presets babel-preset-es2015 --out-dir lib"
   },
   "dependencies": {
     "cheerio": "0.22.0",
@@ -21,7 +22,7 @@
     "chai": "3.5.0",
     "eslint": "3.19.0",
     "mocha": "3.2.0",
-    "nock": "^9.0.11",
+    "nock": "9.0.11",
     "nodemon": "1.11.0"
   }
 }

@@ -5,7 +5,7 @@ Scraper api to get book by years on alis library
 
 npm
 ```
-npm install --save-dev alis-request
+npm install alis-request --save
 ```
 
 yarn 
@@ -28,7 +28,7 @@ You can do what you want with books, for example save in database.
 Next example return all books 2015 year in stream.
 ```js
 import Stream from 'stream';
-import { sendInitialQuery, getPage, getNumberedPageUrls, run, ReadableStreamBooks } from './index';
+import { sendInitialQuery, getPage, getNumberedPageUrls, run, ReadableStreamBooks } from 'alis-request';
 
 const WritableStreamBooks = new Stream.Writable();
 ReadableStreamBooks.pipe(WritableStreamBooks);

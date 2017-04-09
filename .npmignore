@@ -1,2 +1,7 @@
 consumer.js
+index.js
+.babelrc
 test
+.gitignore
+node_modules
+.idea
